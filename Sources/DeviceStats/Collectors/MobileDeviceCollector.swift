@@ -100,6 +100,11 @@ enum MobileDeviceCollector {
             sections.append(StatSection(title: "Akku", items: items))
         }
 
+        if let diagnostics = Shell.find("idevicediagnostics") {
+            let health = batteryHealth(udid: udid, tool: diagnostics)
+            if !health.isEmpty { sections.append(StatSection(title: "Akkuzustand", items: health)) }
+        }
+
         let disk = query("com.apple.disk_usage")
         if let total = disk.int("TotalDataCapacity"), let free = disk.int("TotalDataAvailable") {
             var items: [StatItem] = []
@@ -111,7 +116,6 @@ enum MobileDeviceCollector {
 
         let base = query(nil)
         var device: [StatItem] = []
-        device.add("Gerätefarbe", base.string("DeviceColor"))
         device.add("Region", base.string("RegionInfo"))
         device.add("Baseband", base.string("BasebandVersion"))
         device.add("Aktivierung", base.string("ActivationState"))
@@ -121,6 +125,44 @@ enum MobileDeviceCollector {
         if !device.isEmpty { sections.append(StatSection(title: "Gerät", items: device)) }
 
         return (batteries, sections)
+    }
+
+    /// Ladezyklen, Kapazität usw. aus dem IORegistry-Eintrag AppleSmartBattery des Geräts (diagnostics_relay).
+    private static func batteryHealth(udid: String, tool: String) -> [StatItem] {
+        guard let root = (try? Shell.plist(tool, ["-u", udid, "ioregentry", "AppleSmartBattery"], timeout: 15)) as? [String: Any],
+              var reg = root.dict("IORegistry") else { return [] }
+        if let nested = reg.dict("BatteryData") {
+            for (key, value) in nested where reg[key] == nil { reg[key] = value }
+        }
+
+        var items: [StatItem] = []
+        let design = reg.int("DesignCapacity")
+        let nominal = reg.int("NominalChargeCapacity") ?? reg.int("AppleRawMaxCapacity")
+        if let design, let nominal, design > 0 {
+            // Entspricht "Maximale Kapazität" in den iOS-Einstellungen.
+            items.add("Maximale Kapazität", "\(Int((Double(nominal) / Double(design) * 100).rounded())) %")
+        }
+        items.add("Ladezyklen", reg.int("CycleCount").map(String.init))
+        if let design, let nominal { items.add("Kapazität", "\(nominal) von \(design) mAh") }
+        items.add("Vollladekapazität", reg.int("FullChargeCapacity").map { "\($0) mAh" })
+        items.add("Aktuelle Ladung", (reg.int("RemainingCapacity") ?? reg.int("AppleRawCurrentCapacity")).map { "\($0) mAh" })
+        if let mv = reg.int("Voltage") { items.add("Spannung", String(format: "%.2f V", Double(mv) / 1000)) }
+        if let ma = reg.int("InstantAmperage") {
+            let signed = ma > Int(Int32.max) ? ma - Int(UInt64.max) - 1 : ma
+            items.add("Stromstärke", "\(signed) mA")
+        }
+        if let t = reg.int("Temperature") ?? reg.int("VirtualTemperature"), t > 0 {
+            items.add("Temperatur", String(format: "%.1f °C", Double(t) / 100))
+        }
+        if reg.bool("ExternalConnected") != true, let minutes = reg.int("AvgTimeToEmpty"), minutes > 0, minutes < 65535 {
+            items.add("Restlaufzeit (geschätzt)", Format.duration(TimeInterval(minutes * 60)))
+        }
+        if reg.bool("ExternalConnected") == true, let adapter = reg.dict("AdapterDetails") {
+            let name = adapter.string("Name") ?? adapter.string("Description")
+            let watts = adapter.int("Watts").map { "\($0) W" }
+            items.add("Netzteil", [name, watts].compactMap { $0 }.joined(separator: " · "))
+        }
+        return items
     }
 
     private static func transportName(_ raw: String) -> String {
