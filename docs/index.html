@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DeviceStats für macOS</title>
+<meta name="description" content="Native macOS-App, die Statistiken vom Mac und allen verbundenen Apple-Geräten anzeigt.">
+<link rel="icon" href="icon.png">
+<style>
+  :root {
+    --bg: #f5f5f7; --card: #ffffff; --text: #1d1d1f; --muted: #6e6e73; --accent: #3b6cf6; --border: #e3e3e8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0d0d10; --card: #1a1a1f; --text: #f5f5f7; --muted: #a1a1a6; --accent: #6f8fff; --border: #2a2a31; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.55 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; }
+  main { max-width: 960px; margin: 0 auto; padding: 64px 16px 48px; }
+  header { text-align: center; margin-bottom: 48px; }
+  header img { width: 128px; height: 128px; }
+  h1 { font-size: clamp(2.2rem, 6vw, 3.4rem); margin: 12px 0 8px; letter-spacing: -0.02em; }
+  .lead { color: var(--muted); font-size: 1.2rem; max-width: 620px; margin: 0 auto 28px; }
+  .buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn { display: inline-block; padding: 12px 22px; border-radius: 999px; text-decoration: none; font-weight: 600; }
+  .primary { background: var(--accent); color: #fff; }
+  .secondary { border: 1px solid var(--border); color: var(--text); background: var(--card); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 18px; padding: 22px; }
+  .card h3 { margin: 0 0 6px; font-size: 1.05rem; }
+  .card p { margin: 0; color: var(--muted); font-size: 0.95rem; }
+  .emoji { font-size: 1.6rem; margin-bottom: 8px; display: block; }
+  h2 { margin: 56px 0 16px; font-size: 1.6rem; }
+  pre { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; overflow-x: auto; font: 14px/1.5 ui-monospace, "SF Mono", Menlo, monospace; }
+  footer { margin-top: 56px; text-align: center; color: var(--muted); font-size: 0.9rem; }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <img src="icon.png" alt="">
+    <h1>DeviceStats</h1>
+    <p class="lead">Alle Statistiken deines Macs und deiner verbundenen Apple-Geräte in einer nativen macOS-App: iPhone, iPad, Apple Watch, AirPods, Magic-Zubehör, USB und Displays.</p>
+    <div class="buttons">
+      <a class="btn primary" href="https://github.com/mats623/DeviceStats/releases/latest">Download</a>
+      <a class="btn secondary" href="https://github.com/mats623/DeviceStats">Quellcode auf GitHub</a>
+    </div>
+  </header>
+
+  <div class="grid">
+    <div class="card"><span class="emoji">💻</span><h3>Dieser Mac</h3><p>Chip, RAM-Auslastung, Speicher, Systemlast, Temperaturzustand und detaillierte Akkuwerte: Zyklen, Zustand, mAh, Spannung, Restlaufzeit.</p></div>
+    <div class="card"><span class="emoji">📱</span><h3>iPhone, iPad &amp; Watch</h3><p>Modell, OS-Version, Verbindung per USB oder WLAN. Mit libimobiledevice zusätzlich Akku und Speicherbelegung.</p></div>
+    <div class="card"><span class="emoji">🎧</span><h3>AirPods &amp; Bluetooth</h3><p>Akku links, rechts und Case, Firmware, Modell und Signalstärke, dazu Magic Keyboard, Mouse und Trackpad.</p></div>
+    <div class="card"><span class="emoji">📈</span><h3>Akkuverlauf</h3><p>Diagramme über 6 Stunden bis 30 Tage, lokal gespeichert, plus Menüleisten-Icon mit allen Akkuständen.</p></div>
+    <div class="card"><span class="emoji">🔒</span><h3>Datenschutz</h3><p>Seriennummern, Adressen und UDIDs werden auf Wunsch maskiert. Keine Daten verlassen deinen Mac.</p></div>
+    <div class="card"><span class="emoji">🧾</span><h3>JSON-Export</h3><p>Alle Werte per ⌘E oder <code>--dump</code> als JSON exportieren, standardmäßig anonymisiert.</p></div>
+  </div>
+
+  <h2>Selbst bauen</h2>
+  <pre>git clone https://github.com/mats623/DeviceStats.git
+cd DeviceStats
+./scripts/build-app.sh
+open build/DeviceStats.app</pre>
+  <p>Voraussetzungen: macOS 14+, Xcode (für iPhone/iPad/Watch über <code>devicectl</code>). Optional: <code>brew install libimobiledevice</code>.</p>
+
+  <footer>MIT-Lizenz · <a href="https://github.com/mats623">@mats623</a></footer>
+</main>
+</body>
+</html>
